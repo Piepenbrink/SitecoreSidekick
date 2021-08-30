@@ -2,6 +2,7 @@
 using Sidekick.ContentMigrator.Security;
 using Sitecore.Configuration;
 using Sitecore.Data;
+using Sitecore.Diagnostics;
 using Sitecore.Pipelines;
 using Sitecore.SecurityModel;
 using Sidekick.Core.ContentTree;
@@ -71,13 +72,16 @@ namespace Sidekick.ContentMigrator
 		{
 			_checksumManager.RegenerateChecksum();
 			_checksumManager.StartChecksumTimer();
+
 			if (string.IsNullOrWhiteSpace(AuthenticationSecret))
 			{
+				Log.Error($"[Sidekick] Sitecore Sidekick Content Migrator was initialized with an empty shared secret.", this);
 				throw new InvalidOperationException("Sitecore Sidekick Content Migrator was initialized with an empty shared secret. Make a copy of zSidekick.ContentMigrator.Local.config.example, rename it to .config, and set up a unique, long, randomly generated shared secret there.");
 			}
 
 			if (AuthenticationSecret.Length < 32)
 			{
+				Log.Error($"[Sidekick] Sitecore Sidekick Content Migrator was initialized with an insecure shared secret. Please use a shared secret of 32 or more characters.", this);
 				throw new InvalidOperationException("Sitecore Sidekick Content Migrator was initialized with an insecure shared secret. Please use a shared secret of 32 or more characters.");
 			}
 			base.Process(args);
@@ -87,11 +91,12 @@ namespace Sidekick.ContentMigrator
 		{
 			string serverValue = node.InnerText.Trim('/');
 			string descValue = serverValue;
-	  		if(!string.IsNullOrWhiteSpace(node.Attributes?["desc"]?.Value)){
+			if (!string.IsNullOrWhiteSpace(node.Attributes?["desc"]?.Value))
+			{
 				descValue = node.Attributes["desc"].Value;
-			} 
-			
-			ServerList.Add(serverValue, descValue);	
+			}
+
+			ServerList.Add(serverValue, descValue);
 		}
 		public void BuildPresetList(XmlNode node)
 		{
@@ -113,11 +118,11 @@ namespace Sidekick.ContentMigrator
 				{
 					model.BlackList.Add(xml.InnerText.Trim('/'));
 				}
-				else if(xml.Name.ToLower() == "serverwhitelist")
+				else if (xml.Name.ToLower() == "serverwhitelist")
 				{
 					model.WhiteList.Add(xml.InnerText.Trim('/'));
 				}
-				else if(xml.Name.ToLower() == "source")
+				else if (xml.Name.ToLower() == "source")
 				{
 					model.Ids.Add(xml.InnerText.Trim());
 				}
